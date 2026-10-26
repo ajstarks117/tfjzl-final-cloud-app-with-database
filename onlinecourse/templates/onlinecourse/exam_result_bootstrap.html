@@ -5,7 +5,6 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title>Exam Results - {{ course.name }}</title>
 
     <link rel="stylesheet"
@@ -13,126 +12,116 @@
 </head>
 
 <body>
-    <!-- Navigation bar -->
-    <nav class="navbar navbar-light bg-light">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">
-                Online Course
-            </a>
-
-            {% if user.is_authenticated %}
-                <div class="ml-auto">
-                    <span class="mr-3">{{ user.first_name|default:user.username }}</span>
-                    <a href="{% url 'onlinecourse:logout' %}">Logout</a>
-                </div>
-            {% endif %}
-        </div>
-    </nav>
-
-    <div class="container mt-4 mb-5">
-        <h2>Exam Results: {{ course.name }}</h2>
-
-        <!-- Pass / Fail message -->
-        {% if grade >= 80 %}
-            <div class="alert alert-success mt-3" role="alert">
-                <h4 class="alert-heading">Congratulations, {{ user.first_name|default:user.username }}!</h4>
-                <p>
-                    You have passed the exam and completed the course
-                    with score <strong>{{ grade }}/100</strong>.
-                </p>
-            </div>
-        {% else %}
-            <div class="alert alert-danger mt-3" role="alert">
-                <h4 class="alert-heading">Failed</h4>
-                <p>
-                    Sorry, {{ user.first_name|default:user.username }}!
-                    You have failed the exam with score
-                    <strong>{{ grade }}/100</strong>.
-                </p>
-                <a class="btn btn-danger"
-                   href="{% url 'onlinecourse:course_details' course.id %}">
-                    Retake Exam
-                </a>
-            </div>
+<nav class="navbar navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">
+            Online Course
+        </a>
+        {% if user.is_authenticated %}
+            <span>{{ user.first_name|default:user.username }}</span>
+            <a href="{% url 'onlinecourse:logout' %}">Logout</a>
         {% endif %}
+    </div>
+</nav>
 
-        <!-- Score summary -->
-        <div class="card mt-3">
-            <div class="card-body">
-                <h5 class="card-title">Final Score</h5>
-                <h3>{{ grade }}/100</h3>
-                <div class="progress">
-                    <div class="progress-bar {% if grade >= 80 %}bg-success{% else %}bg-danger{% endif %}"
-                         role="progressbar"
-                         style="width: {{ grade }}%;"
-                         aria-valuenow="{{ grade }}"
-                         aria-valuemin="0"
-                         aria-valuemax="100">
-                        {{ grade }}%
-                    </div>
-                </div>
-            </div>
+<div class="container mt-4 mb-5">
+    <h2>Exam Results: {{ course.name }}</h2>
+
+    {% if grade >= 80 %}
+        <div class="alert alert-success mt-3">
+            <h4><strong>Congratulations, {{ user.first_name|default:user.username }}!</strong></h4>
+            <p>
+                You have passed the exam and completed the course
+                with score <strong>{{ grade }}/100</strong>.
+            </p>
         </div>
-
-        <!-- Detailed question results -->
-        <h4 class="mt-4 mb-3">Detailed Exam Results</h4>
-
-        {% for question in course.question_set.all %}
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        Question {{ forloop.counter }}: {{ question.question_text }}
-                    </h5>
-                    <small>Points: {{ question.grade }}</small>
-                </div>
-
-                <div class="card-body">
-                    {% for choice in question.choice_set.all %}
-                        <div class="form-check mb-2">
-                            {% if choice.is_correct and choice in choices %}
-                                <div class="text-success">
-                                    <strong>✓ Correct answer:</strong>
-                                    {{ choice.choice_text }}
-                                </div>
-                            {% elif choice.is_correct %}
-                                <div class="text-warning">
-                                    <strong>⚠ Not selected:</strong>
-                                    {{ choice.choice_text }}
-                                </div>
-                            {% elif choice in choices %}
-                                <div class="text-danger">
-                                    <strong>✗ Wrong answer:</strong>
-                                    {{ choice.choice_text }}
-                                </div>
-                            {% else %}
-                                <div>
-                                    {{ choice.choice_text }}
-                                </div>
-                            {% endif %}
-                        </div>
-                    {% empty %}
-                        <p class="text-muted">No choices available for this question.</p>
-                    {% endfor %}
-                </div>
-            </div>
-        {% empty %}
-            <div class="alert alert-info">
-                No questions are available for this course.
-            </div>
-        {% endfor %}
-
-        <!-- Navigation -->
-        <div class="mt-4">
-            <a class="btn btn-primary"
+    {% else %}
+        <div class="alert alert-danger mt-3">
+            <h4><strong>Failed</strong></h4>
+            <p>
+                Sorry, {{ user.first_name|default:user.username }}!
+                You have failed the exam with score
+                <strong>{{ grade }}/100</strong>.
+            </p>
+            <a class="btn btn-danger"
                href="{% url 'onlinecourse:course_details' course.id %}">
-                Return to Course
+                Retake Exam
             </a>
+        </div>
+    {% endif %}
 
-            <a class="btn btn-secondary"
-               href="{% url 'onlinecourse:index' %}">
-                All Courses
-            </a>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Final Score</h5>
+            <h3>{{ grade }}/100</h3>
+            <p class="text-muted">
+                Points earned: {{ earned_score }} / {{ possible }}
+            </p>
+            <div class="progress">
+                <div class="progress-bar {% if grade >= 80 %}bg-success{% else %}bg-danger{% endif %}"
+                     role="progressbar"
+                     style="width: {{ grade }}%;"
+                     aria-valuenow="{{ grade }}"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    {{ grade }}%
+                </div>
+            </div>
         </div>
     </div>
+
+    <h4 class="mb-3">Detailed Exam Results</h4>
+
+    {% for question in course.question_set.all %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>
+                    Question {{ forloop.counter }}: {{ question.question_text }}
+                </h5>
+                <small>Score: {{ question.grade }} point(s)</small>
+            </div>
+
+            <div class="card-body">
+                {% for choice in question.choice_set.all %}
+                    <div class="form-check mb-2">
+                        {% if choice.is_correct and choice.id in selected_ids %}
+                            <div class="text-success">
+                                <strong>Correct answer:</strong>
+                                {{ choice.choice_text }}
+                            </div>
+                        {% elif choice.is_correct %}
+                            <div class="text-warning">
+                                <strong>Not selected:</strong>
+                                {{ choice.choice_text }}
+                            </div>
+                        {% elif choice.id in selected_ids %}
+                            <div class="text-danger">
+                                <strong>Wrong answer:</strong>
+                                {{ choice.choice_text }}
+                            </div>
+                        {% else %}
+                            <div>{{ choice.choice_text }}</div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No choices available for this question.</p>
+                {% endfor %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-info">No questions are available.</div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <a class="btn btn-primary"
+           href="{% url 'onlinecourse:course_details' course.id %}">
+            Return to Course
+        </a>
+        <a class="btn btn-secondary"
+           href="{% url 'onlinecourse:index' %}">
+            All Courses
+        </a>
+    </div>
+</div>
 </body>
 </html>
