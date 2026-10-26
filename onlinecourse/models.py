@@ -9,10 +9,8 @@ except Exception:
     sys.exit()
 
 from django.conf import settings
-import uuid
 
 
-# Instructor model
 class Instructor(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -25,12 +23,12 @@ class Instructor(models.Model):
         return self.user.username
 
 
-# Learner model
 class Learner(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+
     STUDENT = 'student'
     DEVELOPER = 'developer'
     DATA_SCIENTIST = 'data_scientist'
@@ -40,27 +38,24 @@ class Learner(models.Model):
         (STUDENT, 'Student'),
         (DEVELOPER, 'Developer'),
         (DATA_SCIENTIST, 'Data Scientist'),
-        (DATABASE_ADMIN, 'Database Admin')
+        (DATABASE_ADMIN, 'Database Admin'),
     ]
 
     occupation = models.CharField(
-        null=False,
         max_length=20,
         choices=OCCUPATION_CHOICES,
-        default=STUDENT
+        default=STUDENT,
     )
     social_link = models.URLField(max_length=200)
 
     def __str__(self):
-        return self.user.username + "," + self.occupation
+        return f"{self.user.username},{self.occupation}"
 
 
-# Course model
 class Course(models.Model):
     name = models.CharField(
-        null=False,
         max_length=30,
-        default='online course'
+        default='online course',
     )
     image = models.ImageField(upload_to='course_images/')
     description = models.CharField(max_length=1000)
@@ -68,24 +63,25 @@ class Course(models.Model):
     instructors = models.ManyToManyField(Instructor)
     users = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        through='Enrollment'
+        through='Enrollment',
     )
     total_enrollment = models.IntegerField(default=0)
     is_enrolled = False
 
     def __str__(self):
-        return "Name: " + self.name + "," + "Description: " + self.description
+        return f"Name: {self.name}, Description: {self.description}"
 
 
-# Lesson model
 class Lesson(models.Model):
     title = models.CharField(max_length=200, default="title")
     order = models.IntegerField(default=0)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.TextField()
 
+    def __str__(self):
+        return self.title
 
-# Enrollment model
+
 class Enrollment(models.Model):
     AUDIT = 'audit'
     HONOR = 'honor'
@@ -94,17 +90,19 @@ class Enrollment(models.Model):
     COURSE_MODES = [
         (AUDIT, 'Audit'),
         (HONOR, 'Honor'),
-        (BETA, 'BETA')
+        (BETA, 'BETA'),
     ]
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     date_enrolled = models.DateField(default=now)
     mode = models.CharField(max_length=5, choices=COURSE_MODES, default=AUDIT)
     rating = models.FloatField(default=5.0)
 
 
-# Question model
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     question_text = models.CharField(max_length=200)
@@ -114,26 +112,27 @@ class Question(models.Model):
         return self.question_text
 
     def is_get_score(self, selected_ids):
-        all_answers = self.choice_set.filter(is_correct=True).count()
-        selected_correct = self.choice_set.filter(
-            is_correct=True,
-            id__in=selected_ids
-        ).count()
+        correct_ids = set(
+            self.choice_set.filter(is_correct=True).values_list('id', flat=True)
+        )
+        selected_for_question = set(
+            self.choice_set.filter(id__in=selected_ids).values_list('id', flat=True)
+        )
+        return correct_ids == selected_for_question
 
-        return all_answers == selected_correct
 
-
-# Choice model
 class Choice(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    choice_text = models.CharField(max_length=200)
+    choice_text = models.CharField(max_length=100)
     is_correct = models.BooleanField(default=False)
 
     def __str__(self):
         return self.choice_text
 
 
-# Submission model
 class Submission(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     choices = models.ManyToManyField(Choice)
+
+    def __str__(self):
+        return f"Submission {self.pk} - Enrollment {self.enrollment_id}"
