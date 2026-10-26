@@ -11,7 +11,6 @@ from .models import (
 )
 
 
-# Inline classes
 class LessonInline(admin.StackedInline):
     model = Lesson
     extra = 5
@@ -27,7 +26,6 @@ class QuestionInline(admin.StackedInline):
     extra = 2
 
 
-# Course administration
 class CourseAdmin(admin.ModelAdmin):
     inlines = [LessonInline]
     list_display = ('name', 'pub_date')
@@ -35,18 +33,15 @@ class CourseAdmin(admin.ModelAdmin):
     search_fields = ['name', 'description']
 
 
-# Question administration
 class QuestionAdmin(admin.ModelAdmin):
     inlines = [ChoiceInline]
     list_display = ['question_text']
 
 
-# Lesson administration
 class LessonAdmin(admin.ModelAdmin):
     list_display = ['title']
 
 
-# Register models
 admin.site.register(Course, CourseAdmin)
 admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Instructor)
